@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, filter } from 'lodash';
 import './App.css';
 import ReactDataSheet from 'react-datasheet';
 import 'react-datasheet/lib/react-datasheet.css';
@@ -70,7 +70,27 @@ function App() {
 		return <div style={style}>{value}{!isValid && '*'}</div>
 	}
 	
-	
+	const pasteParser = string => {
+
+		// filter removes empty rows
+		let newRows = filter(string.split('\n')).map( rowString => {
+			let cells = filter(rowString.split('	')).slice(0,3)
+			return cells.map( (value, col) => {
+				const type = col < 2 ? 'name' : 'email'
+				const isValid = validate(value, type)
+				if (!isValid) setContainsErrors(true)
+				return {
+					value,
+					isValid
+				}
+			})
+		})
+		setGrid(grid.concat(newRows))
+		const newGrid = cloneDeep(grid)
+		newGrid.concat(newRows)
+
+	}
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '5vh' }}>
 			<h2>Please enter the names and emails of your clinicians below</h2>
@@ -86,6 +106,7 @@ function App() {
 					onCellsChanged={handleChange}
 					attributesRenderer={(cell) => ({'data-hint': cell.hint || {}}) }
 					valueViewer={valueViewer}
+					parsePaste={pasteParser}
 				/>
 			</div>
     </div>
