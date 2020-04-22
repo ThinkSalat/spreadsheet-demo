@@ -81,9 +81,10 @@ function App() {
 	}
 	
 	const parsePaste = string => {
-		const parsed = string.split(/\r\n|\n|\r/)
-		.map((row) => row.split('\t'))
+		const parsed = filter(string.split(/\r\n|\n|\r/)
+		.map((row) => filter(row.split('\t'))))
 
+		console.log({parsed})
 		const newRows = parsed.map( row => {
 			return row.map( (value, col) => {
 				const type = col < 2 ? 'name' : 'email'
