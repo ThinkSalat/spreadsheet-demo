@@ -22,7 +22,6 @@ function App() {
 	const [containsErrors, setContainsErrors] = useState(false)
 
 	useEffect(() => {
-		console.log(grid)
 		for (let row of grid) {
 			for (let cell of row) {
 				if (cell.isValid === false) {
@@ -84,22 +83,29 @@ function App() {
 		const parsed = filter(string.split(/\r\n|\n|\r/)
 		.map((row) => filter(row.split('\t'))))
 
-		console.log({parsed})
 		const newRows = parsed.map( row => {
-			return row.map( (value, col) => {
+			const newRow = row.map( (value, col) => {
 				const type = col < 2 ? 'name' : 'email'
 				const isValid = validate(value, type)
 				if (!isValid) setContainsErrors(true)
 				return { value, isValid }
 			})
+			const { length } = newRow
+			const numBlanksToAdd = 3 - length
+			if (numBlanksToAdd > 0) {
+				for (let i = 0; i < numBlanksToAdd; i++) {
+					newRow.push({ value: '', isValid: false })
+				}
+			}
+			return newRow
 		})
 
-
-		const gridCopy = grid.reduce( (newGrid, row) => {
-			if (row.every( ({ value }) => value)) newGrid.push(row)
-			return newGrid
-		}, [])
-		setGrid(gridCopy.concat(newRows))
+		// this auto deletes empty rows - better to just let them do it themselves and not add empty rows when submitting
+		// const gridCopy = grid.reduce( (newGrid, row) => {
+		// 	if (row.every( ({ value }) => value)) newGrid.push(row)
+		// 	return newGrid
+		// }, [])
+		setGrid(grid.concat(newRows))
 	}
 
 
@@ -111,6 +117,9 @@ function App() {
 			{containsErrors &&	<div>valid emails can look like "email_email+email123@email.com"</div>}
 			{!containsErrors && <div>Congrats, there are no errors currently</div>}
 			<button onClick={addRow}>+ Clinician</button>
+
+
+			{/* DataSheet Component */}
 			<div style={{ marginTop: 25 }}>
 				<ReactDataSheet
 					data={grid}
@@ -121,6 +130,8 @@ function App() {
 					parsePaste={parsePaste}
 				/>
 			</div>
+
+
     </div>
   );
 }
