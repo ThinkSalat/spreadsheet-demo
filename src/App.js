@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { cloneDeep, filter } from 'lodash';
+import { cloneDeep, filter, isUndefined, isNull } from 'lodash';
 import './App.css';
 import ReactDataSheet from 'react-datasheet';
 import 'react-datasheet/lib/react-datasheet.css';
@@ -50,14 +50,24 @@ function App() {
 	}
 
 	// on cell deselect, validate contents
-	const handleChange = changes => {
-		const gridCopy = cloneDeep(grid)
+	const handleChange = (changes, additions = []) => {
+		let gridCopy = cloneDeep(grid)
 		changes.forEach( ({ cell, row, col, value }) => {
 			const type = col < 2 ? 'name' : 'email'
 			const isValid = validate(value, type)
 			if (!isValid) setContainsErrors(true)
 			gridCopy[row][col] = {...grid[row][col], value: value.trim(), isValid }
 		})
+		
+		additions.forEach( ({ row, col, value }) => {
+			// const adjustedRow = row + 1
+			const type = col < 2 ? 'name' : 'email'
+			const isValid = validate(value, type)
+			if (!isValid) setContainsErrors(true)
+			if (!gridCopy[row]) gridCopy[row] = []
+			gridCopy[row].push({ value: value.trim(), isValid })
+		})
+
 		setGrid(gridCopy)
 	}
 
@@ -70,26 +80,27 @@ function App() {
 		return <div style={style}>{value}{!isValid && '*'}</div>
 	}
 	
-	const pasteParser = string => {
+	const parsePaste = string => {
+		const parsed = string.split(/\r\n|\n|\r/)
+		.map((row) => row.split('\t'))
 
-		// filter removes empty rows
-		let newRows = filter(string.split('\n')).map( rowString => {
-			let cells = filter(rowString.split('	')).slice(0,3)
-			return cells.map( (value, col) => {
+		const newRows = parsed.map( row => {
+			return row.map( (value, col) => {
 				const type = col < 2 ? 'name' : 'email'
 				const isValid = validate(value, type)
 				if (!isValid) setContainsErrors(true)
-				return {
-					value,
-					isValid
-				}
+				return { value, isValid }
 			})
 		})
-		setGrid(grid.concat(newRows))
-		const newGrid = cloneDeep(grid)
-		newGrid.concat(newRows)
 
+
+		const gridCopy = grid.reduce( (newGrid, row) => {
+			if (row.every( ({ value }) => value)) newGrid.push(row)
+			return newGrid
+		}, [])
+		setGrid(gridCopy.concat(newRows))
 	}
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '5vh' }}>
@@ -106,7 +117,7 @@ function App() {
 					onCellsChanged={handleChange}
 					attributesRenderer={(cell) => ({'data-hint': cell.hint || {}}) }
 					valueViewer={valueViewer}
-					parsePaste={pasteParser}
+					parsePaste={parsePaste}
 				/>
 			</div>
     </div>
