@@ -8,7 +8,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "handsontable": "^7.4.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "react": "^16.13.1",
     "react-data-grid": "^7.0.0-canary.15",
     "react-datasheet": "^1.4.3",
